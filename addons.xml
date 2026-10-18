@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addons>
-<addon id="plugin.video.filmio" name="Filmio" version="1.6.0" provider-name="ceto">
+<addon id="plugin.video.filmio" name="Filmio" version="1.6.1" provider-name="ceto">
     <requires>
         <import addon="xbmc.python" version="3.0.1"/>
         <import addon="script.module.inputstreamhelper" version="0.8.0"/>
@@ -14,7 +14,8 @@
         <description lang="en_GB">Unofficial Kodi client for the Hungarian streaming service filmio.hu. Not affiliated with Filmio or Nemzeti Filmintézet.</description>
         <description lang="hu_HU">Nem hivatalos Kodi kliens a filmio.hu magyar streaming szolgáltatáshoz. Nem áll kapcsolatban a Filmióval vagy a Nemzeti Filmintézettel.</description>
         <disclaimer lang="en_GB">Requires your own Filmio account. Not endorsed by Filmio. Ids and clearlogos come from TMDB: this add-on uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.</disclaimer>
-        <news>1.6.0: Cast in the context menu of films and series: the cast with photos and roles; pick an actor to see their Filmio titles (Kodi's own info window cannot open add-on pages when an actor is clicked). Ratings no longer head the plot; they stay in the info panel.
+        <news>1.6.1: New search works again (the results did not open after typing).
+1.6.0: Cast in the context menu of films and series: the cast with photos and roles; pick an actor to see their Filmio titles (Kodi's own info window cannot open add-on pages when an actor is clicked). Ratings no longer head the plot; they stay in the info panel.
 1.5.0: search history: the Search menu lists your recent searches (stored only on this device); remove one or clear all from the context menu. Remember password (Settings > Account, on by default): an expired session signs in again by itself, and Sign in is pre-filled. The main menu no longer has Genres: Films and Series have their own By genre lists. Menus and the Filmio info panel are Hungarian by default, whatever language Kodi uses; Settings > General > Use Kodi's language switches back. IMDb rating and Rotten Tomatoes Tomatometer from the mapping on films and series (IMDb is the rating the skin shows by default); while browsing they also head the plot (Settings > General > Ratings above the plot).
 0.9.0: richer info from TMDB for mapped titles (cast with photos and roles, writers, studios, countries, tagline, rating, premiere, original title); Filmio data stays the base.
 0.8.3: the short TMDB v3 API key is the default for personal builds and the setting.
