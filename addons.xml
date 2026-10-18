@@ -1,5 +1,38 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addons>
+<addon id="plugin.video.mediaklikk" name="MédiaKlikk" version="0.6.4" provider-name="ceto">
+    <requires>
+        <import addon="xbmc.python" version="3.0.1"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" library="addon.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en_GB">MédiaKlikk video library (unofficial)</summary>
+        <summary lang="hu_HU">MédiaKlikk videótár (nem hivatalos)</summary>
+        <description lang="en_GB">Browse and play the publicly available on-demand programmes of mediaklikk.hu, the Hungarian public media site. Unofficial; not affiliated with MTVA.</description>
+        <description lang="hu_HU">A mediaklikk.hu nyilvánosan elérhető, visszanézhető műsorainak böngészése és lejátszása. Nem hivatalos kiegészítő; nem áll kapcsolatban az MTVA-val.</description>
+        <news>0.6.4: search fixed (it returned to the main menu); search history.
+0.6.3: fanart with the full MédiaKlikk logo.
+0.6.2: add-on icon and fanart.
+0.6.1: ongoing programmes (lists that do not start at episode 1) keep newest first; unreliable episode numbers are ignored.
+0.6.0: programmes without seasons are listed in episode order, with descriptions and lengths where the site provides them.
+0.5.0: Films menu and "Latest videos" in every genre (stand-alone videos that belong to no programme).
+0.4.0: playback (HLS with Kodi's own player, Hungarian subtitles when available).
+0.3.0: programme pages with seasons and episode lists. Playback not yet available.
+0.2.0: programme catalogue (all programmes, genres, search). Episodes and playback not yet available.
+0.1.0: installable skeleton with menu.</news>
+        <platform>all</platform>
+        <license>GPL-3.0-or-later</license>
+        <source>https://github.com/ceto/plugin.video.mediaklikk</source>
+        <website>https://github.com/ceto/plugin.video.mediaklikk</website>
+        <assets>
+            <icon>resources/icon.png</icon>
+            <fanart>resources/fanart.png</fanart>
+        </assets>
+        <language>hu</language>
+    </extension>
+</addon>
 <addon id="repository.ceto" name="Ceto Add-on Repository (unofficial)" version="1.0.0" provider-name="ceto">
     <requires>
         <import addon="xbmc.addon" version="12.0.0"/>
