@@ -5,7 +5,8 @@ Published layout (one directory tree, served as-is by GitHub Pages):
 
     addons.xml                       index of the newest version of every add-on
     addons.xml.md5                   md5 (hex, no newline) of the exact addons.xml bytes
-    index.html                       human landing page
+    index.html                       landing page; also browsable by Kodi's file manager
+    <id>/index.html                  Kodi-browsable list of the add-on's ZIPs
     <id>/<id>-<version>.zip          every published version, never overwritten
     <id>/<asset path>                icon / fanart declared in addon.xml (convenience)
 
@@ -322,7 +323,7 @@ def newest(versions):
 
 
 def generate_index(site):
-    """Rewrite addons.xml, addons.xml.md5 and index.html from the ZIPs in site/."""
+    """Rewrite addons.xml, addons.xml.md5, index.html and <id>/index.html from the ZIPs in site/."""
     ids = site_addon_ids(site)
     if not ids:
         raise RepoError("no add-on ZIPs found in %s; refusing to write an empty index" % site)
@@ -344,16 +345,34 @@ def generate_index(site):
     ET.fromstring(body)  # must parse
     _write(os.path.join(site, "addons.xml"), body)
     _write(os.path.join(site, "addons.xml.md5"), hashlib.md5(body).hexdigest().encode("ascii"))
-    rows = "".join("<li>%s %s</li>\n" % (html.escape(i), html.escape(newest(published_versions(site, i))))
+    # Kodi's HTTP directory parser (CHTTPDirectory) lists a link only when its text equals its
+    # href (ignoring a trailing slash) and href is the first attribute; it must be followed by
+    # more text on the same line. So the root links each add-on folder as "<id>/", and every
+    # folder has its own index.html listing its ZIPs: add the site as a source in Kodi's file
+    # manager and "Install from zip file" can browse it.
+    rows = "".join('<li><a href="%s/">%s/</a> %s</li>\n'
+                   % (html.escape(i), html.escape(i), html.escape(newest(published_versions(site, i))))
                    for i in ids)
-    link = ('<p><a href="%s">Download the repository add-on ZIP</a></p>\n' % html.escape(repo_zip)) if repo_zip else ""
+    link = ('<p>Download: <a href="%s">%s</a></p>\n'
+            % (html.escape(repo_zip), html.escape(repo_zip.split("/")[-1]))) if repo_zip else ""
     page = ("<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\">"
             "<title>Ceto Kodi add-on repository (unofficial)</title></head><body>\n"
             "<h1>Ceto Kodi add-on repository</h1>\n"
             "<p>Unofficial community add-ons, not affiliated with any content provider. "
             "Install the repository ZIP in Kodi 21 or newer "
             "(Settings &rarr; Add-ons &rarr; Install from zip file).</p>\n" + link +
+            "<p>Or straight from Kodi: add this address as a source in the File manager, then "
+            "Install from zip file &rarr; that source &rarr; repository.ceto &rarr; the ZIP.</p>\n"
             "<ul>\n" + rows + "</ul>\n</body></html>\n")
+    for addon_id in ids:
+        names = sorted((zip_name(addon_id, v) for v in published_versions(site, addon_id)),
+                       key=lambda n: parse_version(n[len(addon_id) + 1:-4]), reverse=True)
+        items = "".join('<li><a href="%s">%s</a></li>\n' % (html.escape(n), html.escape(n)) for n in names)
+        folder_page = ("<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\">"
+                       "<title>%s</title></head><body>\n<h1>%s</h1>\n<ul>\n"
+                       '<li><a href="../">Parent directory</a></li>\n%s</ul>\n</body></html>\n'
+                       % (html.escape(addon_id), html.escape(addon_id), items))
+        _write(os.path.join(site, addon_id, "index.html"), folder_page.encode("utf-8"))
     _write(os.path.join(site, "index.html"), page.encode("utf-8"))
     return ids
 

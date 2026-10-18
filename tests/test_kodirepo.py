@@ -1,5 +1,6 @@
 import functools
 import hashlib
+import html
 import http.server
 import io
 import json
@@ -10,6 +11,7 @@ import sys
 import tempfile
 import threading
 import unittest
+import urllib.parse
 import zipfile
 import xml.etree.ElementTree as ET
 
@@ -297,6 +299,28 @@ class VerifyTest(Base):
         with open(os.path.join(self.site, "addons.xml.md5"), "w") as fh:
             fh.write("0" * 32)
         self.assertTrue(any("md5" in p for p in kr.verify_site(self.site)))
+
+    def test_pages_are_browsable_by_kodi_file_manager(self):
+        # mirrors CHTTPDirectory::GetDirectory (Kodi 21): item regex, then name == link
+        item = re.compile(r'<a href="([^"]*)"[^>]*>\s*(.*?)\s*</a>(.+?)(?=<a|</tr|$)', re.I | re.M)
+
+        def kodi_items(page):
+            found = []
+            for link, name, _ in item.findall(page):
+                link = link.lstrip("/").split("?")[0].split("#")[0]
+                link_tmp = urllib.parse.unquote(html.unescape(link).rstrip("/"))
+                name_tmp = html.unescape(name).strip().rstrip("/")
+                if link_tmp not in ("", "..") and name_tmp == link_tmp:
+                    found.append(link)
+            return found
+
+        kr.stage(make_source(self.tmp, version="1.1.0"), "plugin.video.test", self.site)
+        with open(os.path.join(self.site, "index.html"), encoding="utf-8") as fh:
+            self.assertEqual(kodi_items(fh.read()), ["plugin.video.test/"])
+        with open(os.path.join(self.site, "plugin.video.test", "index.html"), encoding="utf-8") as fh:
+            self.assertEqual(kodi_items(fh.read()),
+                             ["plugin.video.test-1.1.0.zip", "plugin.video.test-1.0.0.zip"])
+        self.assertEqual(kr.verify_site(self.site), [])
 
     def test_detects_edited_index(self):
         path = os.path.join(self.site, "addons.xml")

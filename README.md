@@ -18,9 +18,11 @@ Kodi 21 "Omega" and newer. The repository add-on uses only the long-standing `xb
 ## Install
 
 1. In Kodi: **Settings → System → Add-ons**, enable **Unknown sources**.
-2. Download `repository.ceto-<version>.zip` from the link on <https://cetorepo.szabogabi.com/>.
+2. Download the repository ZIP: <https://github.com/ceto/repository.ceto/releases/latest/download/repository.ceto.zip> (always the newest; also on the [Releases](https://github.com/ceto/repository.ceto/releases) page and linked from <https://cetorepo.szabogabi.com/>).
 3. **Settings → Add-ons → Install from zip file** and choose the ZIP.
 4. **Settings → Add-ons → Install from repository → Ceto Add-on Repository (unofficial)** and pick an add-on.
+
+Without a separate download (e.g. on a TV box): **Settings → File manager → Add source**, enter `https://cetorepo.szabogabi.com/`, then in step 3 pick that source → `repository.ceto` → the newest ZIP.
 
 Updates arrive through Kodi's normal add-on update check.
 

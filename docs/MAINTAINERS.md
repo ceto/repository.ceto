@@ -50,7 +50,7 @@ If a run fails after the push but before Pages finished, re-run it: staging is i
 
 ## Releasing the repository add-on itself
 
-`repository.ceto/addon.xml` in this repo. Bump its version only when URLs or metadata change (Kodi refreshes the repo definition when the version increases), merge to `main`, then run the workflow manually with add-on `repository.ceto`. Changing the Pages URL requires a new repository ZIP that users install again.
+`repository.ceto/addon.xml` in this repo. Bump its version only when URLs or metadata change (Kodi refreshes the repo definition when the version increases), merge to `main`, then run the workflow manually with add-on `repository.ceto`. After the live check the publish job creates (or, on a re-run, refreshes) the GitHub Release `repository.ceto-<version>` on the publishing commit, marked latest, with the ZIP attached twice: `repository.ceto-<version>.zip` and the version-free `repository.ceto.zip` behind `releases/latest/download/repository.ceto.zip`. Changing the Pages URL requires a new repository ZIP that users install again.
 
 ## Rollback
 

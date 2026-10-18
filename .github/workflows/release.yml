@@ -253,3 +253,30 @@ jobs:
           URL: ${{ steps.deployment.outputs.page_url }}
         run: |
           python3 tools/scripts/kodirepo.py verify --url "$URL" --attempts 12
+
+      # Repository add-on only: a GitHub Release with the ZIP, so users can download it from the
+      # Releases page or the stable .../releases/latest/download/repository.ceto.zip link.
+      # Runs after the live check, so it never advertises a ZIP that Pages does not serve.
+      - name: Attach the repository ZIP to a GitHub Release
+        if: needs.stage.outputs.addon_id == 'repository.ceto'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.stage.outputs.version }}
+          SOURCE_SHA: ${{ needs.stage.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          TAG="repository.ceto-$VERSION"
+          ZIP="_site/repository.ceto/repository.ceto-$VERSION.zip"
+          [ -f "$ZIP" ] || { echo "missing $ZIP"; exit 1; }
+          mkdir -p assets
+          cp "$ZIP" assets/
+          cp "$ZIP" assets/repository.ceto.zip   # version-free name for the 'latest' link
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            # re-run: replace the assets with the byte-identical published ZIP
+            gh release upload "$TAG" assets/*.zip --clobber -R "$GITHUB_REPOSITORY"
+          else
+            gh release create "$TAG" assets/*.zip -R "$GITHUB_REPOSITORY" \
+              --target "$SOURCE_SHA" --latest --title "Ceto Add-on Repository $VERSION" \
+              --notes "Install in Kodi 21+: Settings → Add-ons → Install from zip file. Same ZIP as https://cetorepo.szabogabi.com/repository.ceto/repository.ceto-$VERSION.zip"
+          fi
+          echo "Release: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"
