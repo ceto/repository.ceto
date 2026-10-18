@@ -1,5 +1,52 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addons>
+<addon id="plugin.video.filmio" name="Filmio" version="0.9.0" provider-name="ceto">
+    <requires>
+        <import addon="xbmc.python" version="3.0.1"/>
+        <import addon="script.module.inputstreamhelper" version="0.8.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" library="addon.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en_GB">Filmio (unofficial)</summary>
+        <summary lang="hu_HU">Filmio (nem hivatalos)</summary>
+        <description lang="en_GB">Unofficial Kodi client for the Hungarian streaming service filmio.hu. Not affiliated with Filmio or Nemzeti Filmintézet.</description>
+        <description lang="hu_HU">Nem hivatalos Kodi kliens a filmio.hu magyar streaming szolgáltatáshoz. Nem áll kapcsolatban a Filmióval vagy a Nemzeti Filmintézettel.</description>
+        <disclaimer lang="en_GB">Requires your own Filmio account. Not endorsed by Filmio. Ids and clearlogos come from TMDB: this add-on uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.</disclaimer>
+        <news>0.9.0: richer info from TMDB for mapped titles (cast with photos and roles, writers, studios, countries, tagline, rating, premiere, original title); Filmio data stays the base.
+0.8.3: the short TMDB v3 API key is the default for personal builds and the setting.
+0.8.2: personal builds can embed your TMDB key (tools/build_zip.py --embed-tmdb-key); the setting still wins.
+0.8.1: clearlogo artwork looked up from TMDB with your own TMDB key (Settings > General); not part of the public mapping.
+0.8.0: clearlogo artwork on films, series, episodes and the playing item.
+0.7.1: external id mapping switched on (857 Filmio titles with TMDB/IMDb ids).
+0.7.0: TMDB/IMDb ids from an external mapping file (off until MAPPING_URL is set); the playing item now carries full metadata (title, year, show, season, episode).
+0.6.0: Android / Android TV is the target platform; removed the unused header-override and service-certificate experiments.
+0.5.6: playback heartbeat on its own thread (exact 5 s, also on Android); thread-safe token refresh.
+0.5.5: no service certificate by default (broke DRM setup on Android).
+0.5.4: add-on icon and fanart.
+0.5.3: license header override is developer config only (filmio/config.py), off by default; removed from Settings.
+0.5.1: license requests sent the web player headers (no effect: still 403).
+0.5.0: My list (add/remove from the context menu), Filmio resume points and watched marks, 15-minute menu cache with a Clear cache button.
+0.4.3: a failed start no longer saves a resume position.
+0.4.2: Widevine privacy mode (server certificate), as the web player uses.
+0.4.1: diagnostic license probe in debug mode.
+0.4.0: playback (DASH + Widevine via InputStream Adaptive), playback-session heartbeat and progress sync.
+0.3.0: sign in / sign out (email and password). Continue watching and My list when signed in.
+0.2.1: going back to search results no longer re-opens the keyboard.
+0.2.0: catalogue browsing (home rows, films, series, animation, genres, decades, search). Playback not yet available.
+0.1.0: installable skeleton with menu.</news>
+        <platform>all</platform>
+        <license>GPL-3.0-or-later</license>
+        <source>https://github.com/ceto/plugin.video.filmio</source>
+        <website>https://github.com/ceto/plugin.video.filmio</website>
+        <assets>
+            <icon>resources/icon.png</icon>
+            <fanart>resources/fanart.png</fanart>
+        </assets>
+        <language>hu en</language>
+    </extension>
+</addon>
 <addon id="plugin.video.mediaklikk" name="MédiaKlikk" version="0.6.4" provider-name="ceto">
     <requires>
         <import addon="xbmc.python" version="3.0.1"/>
