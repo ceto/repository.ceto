@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Unit tests
+        run: |
+          pip install pyyaml
+          python -m unittest discover tests -v
+      - name: Build the repository add-on into a scratch site and verify it
+        run: |
+          python scripts/kodirepo.py stage --source repository.ceto --id repository.ceto --site "$RUNNER_TEMP/site"
+          python scripts/kodirepo.py verify --site "$RUNNER_TEMP/site"

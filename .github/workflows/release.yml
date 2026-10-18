@@ -1,0 +1,253 @@
+name: Release add-on
+
+# Stage (always): build, validate and verify the candidate site, upload it as an artifact.
+# Publish (only when explicitly enabled): commit it to the `published` branch and deploy GitHub Pages.
+#
+# Publishing needs BOTH the request to publish AND the repository variable PUBLISH_ENABLED == 'true'.
+# Without the variable every run is a dry run.
+
+on:
+  repository_dispatch:
+    types: [addon-release]
+  workflow_dispatch:
+    inputs:
+      addon_id:
+        description: Add-on to release
+        required: true
+        type: choice
+        options:
+          - repository.ceto
+          - plugin.video.filmio
+          - plugin.video.mediaklikk
+      tag:
+        description: Release tag in the add-on's repository, e.g. v0.9.0 (ignored for repository.ceto)
+        required: false
+        type: string
+      publish:
+        description: Publish (otherwise dry run). Also needs the PUBLISH_ENABLED repository variable.
+        required: true
+        type: boolean
+        default: false
+
+# One release at a time; never cancel a run that may be half-way through publishing.
+concurrency:
+  group: repository-publish
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      publish: ${{ steps.resolve.outputs.publish }}
+      addon_id: ${{ steps.resolve.outputs.addon_id }}
+      version: ${{ steps.result.outputs.version }}
+      status: ${{ steps.result.outputs.status }}
+      source_sha: ${{ steps.result.outputs.source_sha }}
+      published_head: ${{ steps.site.outputs.head }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Resolve and validate the request
+        id: resolve
+        env:
+          EVENT: ${{ github.event_name }}
+          D_ID: ${{ github.event.client_payload.addon_id }}
+          D_TAG: ${{ github.event.client_payload.tag }}
+          D_PRE: ${{ github.event.client_payload.prerelease }}
+          I_ID: ${{ inputs.addon_id }}
+          I_TAG: ${{ inputs.tag }}
+          I_PUBLISH: ${{ inputs.publish }}
+          PUBLISH_ENABLED: ${{ vars.PUBLISH_ENABLED }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = repository_dispatch ]; then
+            ADDON_ID="$D_ID"; TAG="$D_TAG"
+            WANT=true; [ "$D_PRE" = "true" ] && WANT=false
+          else
+            ADDON_ID="$I_ID"; TAG="$I_TAG"; WANT="$I_PUBLISH"
+          fi
+          [[ "$ADDON_ID" =~ ^[a-z0-9][a-z0-9_.-]*$ ]] || { echo "bad add-on id"; exit 1; }
+          INFO=$(python3 scripts/kodirepo.py source-info --id "$ADDON_ID")   # allowlist: addons.json
+          REPO=$(jq -r .repo <<<"$INFO"); SRCPATH=$(jq -r .path <<<"$INFO")
+          if [ -n "$REPO" ]; then
+            [[ "$TAG" =~ ^v?[0-9]+(\.[0-9]+){1,3}$ ]] || { echo "a release tag like v1.2.3 is required"; exit 1; }
+          else
+            TAG=""
+          fi
+          PUBLISH=false
+          if [ "$WANT" = true ] && [ "$PUBLISH_ENABLED" = true ]; then PUBLISH=true; fi
+          {
+            echo "addon_id=$ADDON_ID"; echo "tag=$TAG"; echo "repo=$REPO"; echo "path=$SRCPATH"
+            echo "publish=$PUBLISH"
+          } >> "$GITHUB_OUTPUT"
+          echo "### Release request" >> "$GITHUB_STEP_SUMMARY"
+          echo "add-on \`$ADDON_ID\`, tag \`${TAG:-n/a}\`, publish: **$PUBLISH**" >> "$GITHUB_STEP_SUMMARY"
+          [ "$PUBLISH" = true ] || echo "_Dry run: nothing will be published._" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check out the add-on source at the release tag
+        if: steps.resolve.outputs.repo != ''
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ steps.resolve.outputs.repo }}
+          ref: refs/tags/${{ steps.resolve.outputs.tag }}
+          token: ${{ secrets.SOURCE_READ_TOKEN || github.token }}
+          path: src
+          persist-credentials: false
+
+      - name: Locate the published tree
+        id: site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if OUT=$(gh api "repos/${GITHUB_REPOSITORY}/branches/published" 2>&1); then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          elif grep -q "404" <<<"$OUT"; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "$OUT"; exit 1
+          fi
+
+      - name: Check out the currently published tree
+        if: steps.site.outputs.exists == 'true'
+        uses: actions/checkout@v7
+        with:
+          ref: published
+          path: site
+          persist-credentials: false
+
+      - name: Stage and verify
+        id: result
+        env:
+          ADDON_ID: ${{ steps.resolve.outputs.addon_id }}
+          TAG: ${{ steps.resolve.outputs.tag }}
+          SRCPATH: ${{ steps.resolve.outputs.path }}
+          REPO: ${{ steps.resolve.outputs.repo }}
+        run: |
+          set -euo pipefail
+          mkdir -p site
+          HEAD=none; [ -d site/.git ] && HEAD=$(git -C site rev-parse HEAD)
+          echo "head=$HEAD" >> "$GITHUB_OUTPUT"
+          if [ -n "$REPO" ]; then
+            SRC=src
+            # the tag must really be a tag, and must point at the checked-out commit
+            git -C src describe --exact-match --tags HEAD >/dev/null
+            SHA=$(git -C src rev-parse HEAD)
+            python3 scripts/kodirepo.py stage --source "$SRC" --id "$ADDON_ID" --tag "$TAG" --site site > result.json
+          else
+            SHA=$GITHUB_SHA
+            python3 scripts/kodirepo.py stage --source "$SRCPATH" --id "$ADDON_ID" --site site > result.json
+          fi
+          python3 scripts/kodirepo.py verify --site site
+          cat result.json
+          {
+            echo "version=$(jq -r .version result.json)"
+            echo "status=$(jq -r .status result.json)"
+            echo "source_sha=$SHA"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "### Staged"
+            echo '```json'; cat result.json; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the candidate site
+        uses: actions/upload-artifact@v7
+        with:
+          name: staged-site
+          path: site
+          retention-days: 14
+
+  publish:
+    needs: stage
+    if: needs.stage.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # push the `published` branch
+      pages: write      # deploy Pages
+      id-token: write   # Pages deployment authentication
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the tooling
+        uses: actions/checkout@v7
+        with:
+          path: tools
+          persist-credentials: false
+
+      - name: Check out the repository for pushing the published branch
+        uses: actions/checkout@v7
+        with:
+          path: pub
+          persist-credentials: true
+
+      - name: Switch to the published branch
+        working-directory: pub
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --heads origin published >/dev/null 2>&1; then
+            git fetch --depth=1 origin published
+            git checkout -q -B published FETCH_HEAD
+          else
+            git checkout -q --orphan published
+            git rm -rfq .
+          fi
+
+      - name: Refuse to publish over a moved branch
+        working-directory: pub
+        env:
+          EXPECTED: ${{ needs.stage.outputs.published_head }}
+        run: |
+          set -euo pipefail
+          CURRENT=none
+          git rev-parse -q --verify HEAD >/dev/null 2>&1 && CURRENT=$(git rev-parse HEAD)
+          [ "$CURRENT" = "$EXPECTED" ] || { echo "published branch changed since staging ($EXPECTED -> $CURRENT); re-run"; exit 1; }
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: staged-site
+          path: staged
+
+      - name: Verify the staged tree once more, then commit it
+        env:
+          ADDON_ID: ${{ needs.stage.outputs.addon_id }}
+          VERSION: ${{ needs.stage.outputs.version }}
+          SOURCE_SHA: ${{ needs.stage.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          python3 tools/scripts/kodirepo.py verify --site staged
+          rsync -a --delete --exclude .git staged/ pub/
+          cd pub
+          git add -A
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --cached --quiet; then
+            echo "nothing new to commit (already published); redeploying"
+          else
+            git commit -q -m "Publish ${ADDON_ID} ${VERSION}" -m "Source commit: ${SOURCE_SHA}"
+            git push origin HEAD:published
+          fi
+          cd ..
+          mkdir -p _site
+          rsync -a --exclude .git pub/ _site/
+          python3 tools/scripts/kodirepo.py verify --site _site
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+      - name: Verify the live site
+        env:
+          URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          python3 tools/scripts/kodirepo.py verify --url "$URL" --attempts 12

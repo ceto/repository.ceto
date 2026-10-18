@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+/dist/
+/site/
+/_site/
+.env
+.env.*
+*.secret*

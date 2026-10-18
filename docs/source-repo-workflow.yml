@@ -1,0 +1,28 @@
+# Copy to .github/workflows/notify-repository.yml in each add-on repository.
+# Sends a repository_dispatch to ceto/repository.ceto when a GitHub Release is published.
+# Needs the secret REPOSITORY_DISPATCH_TOKEN (fine-grained PAT, only ceto/repository.ceto,
+# Contents: read and write). Draft releases do not trigger "published".
+name: Notify add-on repository
+
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tell repository.ceto about the release
+        env:
+          GH_TOKEN: ${{ secrets.REPOSITORY_DISPATCH_TOKEN }}
+          ADDON_ID: plugin.video.CHANGE_ME
+          TAG: ${{ github.event.release.tag_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          gh api repos/ceto/repository.ceto/dispatches -X POST \
+            -f event_type=addon-release \
+            -f "client_payload[addon_id]=$ADDON_ID" \
+            -f "client_payload[tag]=$TAG" \
+            -F "client_payload[prerelease]=$PRERELEASE"

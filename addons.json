@@ -1,0 +1,7 @@
+{
+  "addons": {
+    "repository.ceto": {"path": "repository.ceto"},
+    "plugin.video.filmio": {"repo": "ceto/plugin.video.filmio"},
+    "plugin.video.mediaklikk": {"repo": "ceto/plugin.video.mediaklikk"}
+  }
+}
