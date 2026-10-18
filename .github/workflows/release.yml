@@ -222,7 +222,9 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/scripts/kodirepo.py verify --site staged
-          rsync -a --delete --exclude .git staged/ pub/
+          # --checksum: addons.xml.md5 never changes size, so size+mtime alone can skip it
+          rsync -a --checksum --delete --exclude .git staged/ pub/
+          python3 tools/scripts/kodirepo.py verify --site pub   # before anything is pushed
           cd pub
           git add -A
           git config user.name "github-actions[bot]"
