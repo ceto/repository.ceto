@@ -47,7 +47,7 @@ jobs:
       version: ${{ steps.result.outputs.version }}
       status: ${{ steps.result.outputs.status }}
       source_sha: ${{ steps.result.outputs.source_sha }}
-      published_head: ${{ steps.site.outputs.head }}
+      published_head: ${{ steps.result.outputs.head }}
     steps:
       - uses: actions/checkout@v7
         with:

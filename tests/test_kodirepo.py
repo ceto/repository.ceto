@@ -4,6 +4,7 @@ import http.server
 import io
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -409,6 +410,38 @@ class ConfigAndRepoAddonTest(unittest.TestCase):
                 self.assertNotIn("client_payload", run)
                 self.assertNotIn("github.event.inputs", run)
                 self.assertNotIn("inputs.", run)
+
+    def test_step_output_references_are_written_by_that_step(self):
+        # an expression naming the wrong step silently evaluates to an empty string
+        try:
+            import yaml
+        except ImportError:
+            self.skipTest("PyYAML not installed")
+        wf = os.path.join(ROOT, ".github", "workflows")
+        ref = re.compile(r"steps\.([A-Za-z0-9_-]+)\.outputs\.([A-Za-z0-9_-]+)")
+
+        def strings(node):
+            if isinstance(node, dict):
+                for value in node.values():
+                    yield from strings(value)
+            elif isinstance(node, list):
+                for value in node:
+                    yield from strings(value)
+            elif isinstance(node, str):
+                yield node
+
+        for name in sorted(os.listdir(wf)):
+            with open(os.path.join(wf, name), encoding="utf-8") as fh:
+                doc = yaml.safe_load(fh)
+            for job_name, job in doc["jobs"].items():
+                steps = {s["id"]: s for s in job.get("steps", []) if "id" in s}
+                for text in strings(job):
+                    for step_id, output in ref.findall(text):
+                        label = "%s/%s: steps.%s.outputs.%s" % (name, job_name, step_id, output)
+                        self.assertIn(step_id, steps, label)
+                        step = steps[step_id]
+                        if "run" in step:
+                            self.assertRegex(step["run"], r"\b%s=" % re.escape(output), label)
 
 
 if __name__ == "__main__":
