@@ -62,7 +62,7 @@ Publishing is append-only. To withdraw a bad release, publish a fixed higher ver
 python3 scripts/kodirepo.py validate --source ../plugin.video.filmio --id plugin.video.filmio --tag v0.9.0
 python3 scripts/kodirepo.py stage    --source ../plugin.video.filmio --id plugin.video.filmio --tag v0.9.0 --site /tmp/site
 python3 scripts/kodirepo.py verify   --site /tmp/site
-python3 scripts/kodirepo.py verify   --url https://ceto.github.io/repository.ceto/
+python3 scripts/kodirepo.py verify   --url https://cetorepo.szabogabi.com/
 ```
 
 ## Assumptions not yet verified in a real Kodi

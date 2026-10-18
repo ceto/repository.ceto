@@ -366,7 +366,7 @@ class ConfigAndRepoAddonTest(unittest.TestCase):
         root = ET.fromstring(data)
         ext = root.find("./extension[@point='xbmc.addon.repository']")
         d = ext.find("dir")
-        base = "https://ceto.github.io/repository.ceto"
+        base = "https://cetorepo.szabogabi.com"
         self.assertEqual(d.findtext("info"), base + "/addons.xml")
         self.assertEqual(d.findtext("checksum"), base + "/addons.xml.md5")
         self.assertEqual(d.find("datadir").get("zip"), "true")
@@ -376,12 +376,15 @@ class ConfigAndRepoAddonTest(unittest.TestCase):
         tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, tmp, True)
         site = os.path.join(tmp, "site")
-        res = kr.stage(os.path.join(ROOT, "repository.ceto"), "repository.ceto", site)
-        self.assertEqual(res["zip"], "repository.ceto/repository.ceto-1.0.0.zip")
+        src = os.path.join(ROOT, "repository.ceto")
+        version = kr.load_source(src, "repository.ceto")[0].version
+        res = kr.stage(src, "repository.ceto", site)
+        expected = "repository.ceto/repository.ceto-%s.zip" % version
+        self.assertEqual(res["zip"], expected)
         with open(os.path.join(site, res["zip"]), "rb") as fh:
-            self.assertEqual(kr.inspect_zip(fh, "repository.ceto")[:2], ("repository.ceto", "1.0.0"))
+            self.assertEqual(kr.inspect_zip(fh, "repository.ceto")[:2], ("repository.ceto", version))
         with open(os.path.join(site, "index.html"), encoding="utf-8") as fh:
-            self.assertIn("repository.ceto/repository.ceto-1.0.0.zip", fh.read())
+            self.assertIn(expected, fh.read())
 
     def test_workflows_are_valid_yaml_and_never_embed_secrets(self):
         try:

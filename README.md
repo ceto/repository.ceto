@@ -18,9 +18,7 @@ Kodi 21 "Omega" and newer. The repository add-on uses only the long-standing `xb
 ## Install
 
 1. In Kodi: **Settings → System → Add-ons**, enable **Unknown sources**.
-2. Download `repository.ceto-<version>.zip` from  
-   <https://ceto.github.io/repository.ceto/repository.ceto/>  
-   (the landing page <https://ceto.github.io/repository.ceto/> links the current file).
+2. Download `repository.ceto-<version>.zip` from the link on <https://cetorepo.szabogabi.com/>.
 3. **Settings → Add-ons → Install from zip file** and choose the ZIP.
 4. **Settings → Add-ons → Install from repository → Ceto Add-on Repository (unofficial)** and pick an add-on.
 
@@ -28,7 +26,7 @@ Updates arrive through Kodi's normal add-on update check.
 
 ## How it works
 
-- Hosted on GitHub Pages, no server or database. The published tree lives on the `published` branch and is deployed by GitHub Actions.
+- Hosted on GitHub Pages under the custom domain `cetorepo.szabogabi.com` (DNS on Cloudflare, CNAME to `ceto.github.io`), no server or database. The old `ceto.github.io/repository.ceto` address redirects there; repository add-on 1.0.0 still points at it, 1.0.1 and later use the custom domain. The published tree lives on the `published` branch and is deployed by GitHub Actions.
 - `addons.xml` lists the newest version of each add-on; `addons.xml.md5` is the md5 of the exact published `addons.xml`; ZIPs are `<id>/<id>-<version>.zip`. Old versions are kept, and a published version is never overwritten with different content.
 - Add-ons stay in their own repositories. Publishing a **GitHub Release** there triggers the release workflow here. See [docs/MAINTAINERS.md](docs/MAINTAINERS.md).
 
