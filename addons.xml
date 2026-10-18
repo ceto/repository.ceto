@@ -48,7 +48,7 @@
         <language>hu en</language>
     </extension>
 </addon>
-<addon id="plugin.video.mediaklikk" name="MédiaKlikk" version="0.6.4" provider-name="ceto">
+<addon id="plugin.video.mediaklikk" name="MédiaKlikk" version="1.5.0" provider-name="ceto">
     <requires>
         <import addon="xbmc.python" version="3.0.1"/>
     </requires>
@@ -60,7 +60,8 @@
         <summary lang="hu_HU">MédiaKlikk videótár (nem hivatalos)</summary>
         <description lang="en_GB">Browse and play the publicly available on-demand programmes of mediaklikk.hu, the Hungarian public media site. Unofficial; not affiliated with MTVA.</description>
         <description lang="hu_HU">A mediaklikk.hu nyilvánosan elérhető, visszanézhető műsorainak böngészése és lejátszása. Nem hivatalos kiegészítő; nem áll kapcsolatban az MTVA-val.</description>
-        <news>0.6.4: search fixed (it returned to the main menu); search history.
+        <news>1.5.0: first release through the add-on repository. The version is above the older community MédiaKlikk add-on (1.3.0), so Kodi does not replace this one with it.
+0.6.4: search fixed (it returned to the main menu); search history.
 0.6.3: fanart with the full MédiaKlikk logo.
 0.6.2: add-on icon and fanart.
 0.6.1: ongoing programmes (lists that do not start at episode 1) keep newest first; unreliable episode numbers are ignored.
